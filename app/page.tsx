@@ -1,3 +1,4 @@
+// app/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -11,6 +12,33 @@ export default function Home() {
   const [scanStatus, setScanStatus] = useState<StatusCheckResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [registering, setRegistering] = useState(false);
+
+  const registerNfc = async () => {
+    try {
+      setRegistering(true);
+      setError(null);
+      
+      const response = await fetch('/api/register-nfc', {
+        method: 'POST',
+      });
+      
+      const data = await response.json();
+      console.log('NFC Registration Response:', data);
+      
+      if (!response.ok || data.status !== 200) {
+        throw new Error(data.error || 'Failed to register NFC');
+      }
+
+      // If successful, proceed with QR code generation
+      await requestNewQrCode();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to register NFC');
+      console.error('NFC registration error:', err);
+    } finally {
+      setRegistering(false);
+    }
+  };
 
   const requestNewQrCode = async () => {
     try {
@@ -44,7 +72,7 @@ export default function Home() {
 
   const startStatusCheck = async (code: string) => {
     let attempts = 0;
-    const maxAttempts = 6; // 30 seconds total (6 * 5 seconds)
+    const maxAttempts = 6;
     
     const checkStatus = async () => {
       if (attempts >= maxAttempts) return;
@@ -67,24 +95,20 @@ export default function Home() {
         
         setScanStatus(data);
         
-        // If scan was successful, verify the NFC ID
-        if (data.status === 200) {
-          if (data.nfc_tag === EXPECTED_NFC_ID) {
-            console.log('Correct NFC tag scanned!');
-            // Handle successful verification here
-          } else {
-            setError(`Invalid NFC tag scanned. Expected ${EXPECTED_NFC_ID}, got ${data.nfc_tag}`);
-            console.error('NFC tag mismatch:', {
-              expected: EXPECTED_NFC_ID,
-              received: data.nfc_tag
-            });
-          }
-          return; // Stop polling
-        }
-        
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(checkStatus, 5000);
+        // Handle different status codes
+        switch (data.status) {
+          case 200:
+            console.log('Successful scan!');
+            return; // Stop polling
+          case 210:
+            setError('NFC tag needs to be registered first');
+            return; // Stop polling
+          default:
+            // Continue polling for other status codes
+            attempts++;
+            if (attempts < maxAttempts) {
+              setTimeout(checkStatus, 5000);
+            }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to check scan status');
@@ -100,13 +124,13 @@ export default function Home() {
       <div className="max-w-md mx-auto space-y-8">
         <h1 className="text-3xl font-bold text-center">NFC Scanner</h1>
         
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-4">
           <button
-            onClick={requestNewQrCode}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
+            onClick={registerNfc}
+            disabled={registering || loading}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400"
           >
-            {loading ? 'Generating...' : 'Generate New QR Code'}
+            {registering ? 'Registering NFC...' : 'Register NFC & Generate QR'}
           </button>
         </div>
 
