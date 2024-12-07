@@ -2,6 +2,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    domains: ['causality.xyz'],
     remotePatterns: [
       {
         protocol: 'https',

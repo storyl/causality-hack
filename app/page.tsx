@@ -20,12 +20,15 @@ export default function Home() {
         method: 'POST',
       });
       
+      const data = await response.json();
+      console.log('QR Code API Response:', data); // Debug log
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate QR code');
+        throw new Error(data.error || 'Failed to generate QR code');
       }
 
-      const data = await response.json();
+      // Log the QR code link to verify it's correct
+      console.log('QR Code Link:', data.qrCodeLink);
       setQrData(data);
       
       // Start polling for status
@@ -56,11 +59,13 @@ export default function Home() {
           body: JSON.stringify({ code }),
         });
         
+        const data = await response.json();
+        console.log('Status Check Response:', data); // Debug log
+        
         if (!response.ok) {
-          throw new Error('Failed to check status');
+          throw new Error(data.error || 'Failed to check status');
         }
         
-        const data: StatusCheckResponse = await response.json();
         setScanStatus(data);
         
         if (data.status === 200) {
@@ -73,13 +78,16 @@ export default function Home() {
           setTimeout(checkStatus, 5000);
         }
       } catch (err) {
-        setError('Failed to check scan status');
+        setError(err instanceof Error ? err.message : 'Failed to check scan status');
         console.error('Status check error:', err);
       }
     };
     
     checkStatus();
   };
+
+  // Debug log when qrData changes
+  console.log('Current qrData:', qrData);
 
   return (
     <main className="min-h-screen p-8">
@@ -102,14 +110,24 @@ export default function Home() {
           </div>
         )}
 
-        {qrData?.qrCodeLink && (
+        {qrData && qrData.qrCodeLink && (
           <div className="flex flex-col items-center space-y-4">
-            <div className="relative w-[200px] h-[200px]">
+            {/* Debug output */}
+            <div className="text-sm text-gray-500">
+              QR Code Link: {qrData.qrCodeLink}
+            </div>
+            
+            <div className="relative w-[200px] h-[200px] bg-gray-100">
               <Image
                 src={qrData.qrCodeLink}
                 alt="QR Code"
                 fill
                 className="border rounded object-contain"
+                unoptimized // Try without Next.js image optimization
+                onError={(e) => {
+                  console.error('Image failed to load:', e);
+                  setError('Failed to load QR code image');
+                }}
               />
             </div>
             {qrData.deeplink && (
