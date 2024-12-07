@@ -73,7 +73,7 @@ export function CausalityDemo() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Open in Causality App
+          Open via Causality App
         </a>
       )}
     </div>
