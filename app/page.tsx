@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { QrCodeResponse, StatusCheckResponse } from './types';
 
+const EXPECTED_NFC_ID = '048306ca311794';
+
 export default function Home() {
   const [qrData, setQrData] = useState<QrCodeResponse | null>(null);
   const [scanStatus, setScanStatus] = useState<StatusCheckResponse | null>(null);
@@ -21,17 +23,14 @@ export default function Home() {
       });
       
       const data = await response.json();
-      console.log('QR Code API Response:', data); // Debug log
+      console.log('QR Code API Response:', data);
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate QR code');
       }
 
-      // Log the QR code link to verify it's correct
-      console.log('QR Code Link:', data.qrCodeLink);
       setQrData(data);
       
-      // Start polling for status
       if (data.qrcode) {
         startStatusCheck(data.qrcode);
       }
@@ -60,7 +59,7 @@ export default function Home() {
         });
         
         const data = await response.json();
-        console.log('Status Check Response:', data); // Debug log
+        console.log('Status Check Response:', data);
         
         if (!response.ok) {
           throw new Error(data.error || 'Failed to check status');
@@ -68,9 +67,19 @@ export default function Home() {
         
         setScanStatus(data);
         
+        // If scan was successful, verify the NFC ID
         if (data.status === 200) {
-          // Success - stop polling
-          return;
+          if (data.nfc_tag === EXPECTED_NFC_ID) {
+            console.log('Correct NFC tag scanned!');
+            // Handle successful verification here
+          } else {
+            setError(`Invalid NFC tag scanned. Expected ${EXPECTED_NFC_ID}, got ${data.nfc_tag}`);
+            console.error('NFC tag mismatch:', {
+              expected: EXPECTED_NFC_ID,
+              received: data.nfc_tag
+            });
+          }
+          return; // Stop polling
         }
         
         attempts++;
@@ -85,9 +94,6 @@ export default function Home() {
     
     checkStatus();
   };
-
-  // Debug log when qrData changes
-  console.log('Current qrData:', qrData);
 
   return (
     <main className="min-h-screen p-8">
@@ -110,20 +116,15 @@ export default function Home() {
           </div>
         )}
 
-        {qrData && qrData.qrCodeLink && (
+        {qrData?.qrCodeLink && (
           <div className="flex flex-col items-center space-y-4">
-            {/* Debug output */}
-            <div className="text-sm text-gray-500">
-              QR Code Link: {qrData.qrCodeLink}
-            </div>
-            
             <div className="relative w-[200px] h-[200px] bg-gray-100">
               <Image
                 src={qrData.qrCodeLink}
                 alt="QR Code"
                 fill
                 className="border rounded object-contain"
-                unoptimized // Try without Next.js image optimization
+                unoptimized
                 onError={(e) => {
                   console.error('Image failed to load:', e);
                   setError('Failed to load QR code image');
