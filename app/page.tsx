@@ -5,40 +5,11 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { QrCodeResponse, StatusCheckResponse } from './types';
 
-const EXPECTED_NFC_ID = '048306ca311794';
-
 export default function Home() {
   const [qrData, setQrData] = useState<QrCodeResponse | null>(null);
   const [scanStatus, setScanStatus] = useState<StatusCheckResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [registering, setRegistering] = useState(false);
-
-  const registerNfc = async () => {
-    try {
-      setRegistering(true);
-      setError(null);
-      
-      const response = await fetch('/api/register-nfc', {
-        method: 'POST',
-      });
-      
-      const data = await response.json();
-      console.log('NFC Registration Response:', data);
-      
-      if (!response.ok || data.status !== 200) {
-        throw new Error(data.error || 'Failed to register NFC');
-      }
-
-      // If successful, proceed with QR code generation
-      await requestNewQrCode();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to register NFC');
-      console.error('NFC registration error:', err);
-    } finally {
-      setRegistering(false);
-    }
-  };
 
   const requestNewQrCode = async () => {
     try {
@@ -51,7 +22,7 @@ export default function Home() {
       });
       
       const data = await response.json();
-      console.log('QR Code API Response:', data);
+      console.log('QR Code Response:', data);
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate QR code');
@@ -59,6 +30,7 @@ export default function Home() {
 
       setQrData(data);
       
+      // Start polling for status
       if (data.qrcode) {
         startStatusCheck(data.qrcode);
       }
@@ -72,7 +44,7 @@ export default function Home() {
 
   const startStatusCheck = async (code: string) => {
     let attempts = 0;
-    const maxAttempts = 6;
+    const maxAttempts = 6; // 30 seconds total (6 * 5 seconds)
     
     const checkStatus = async () => {
       if (attempts >= maxAttempts) return;
@@ -95,20 +67,14 @@ export default function Home() {
         
         setScanStatus(data);
         
-        // Handle different status codes
-        switch (data.status) {
-          case 200:
-            console.log('Successful scan!');
-            return; // Stop polling
-          case 210:
-            setError('NFC tag needs to be registered first');
-            return; // Stop polling
-          default:
-            // Continue polling for other status codes
-            attempts++;
-            if (attempts < maxAttempts) {
-              setTimeout(checkStatus, 5000);
-            }
+        if (data.status === 200) {
+          // Success - stop polling
+          return;
+        }
+        
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(checkStatus, 5000);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to check scan status');
@@ -124,13 +90,13 @@ export default function Home() {
       <div className="max-w-md mx-auto space-y-8">
         <h1 className="text-3xl font-bold text-center">NFC Scanner</h1>
         
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex justify-center">
           <button
-            onClick={registerNfc}
-            disabled={registering || loading}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400"
+            onClick={requestNewQrCode}
+            disabled={loading}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
           >
-            {registering ? 'Registering NFC...' : 'Register NFC & Generate QR'}
+            {loading ? 'Generating...' : 'Generate QR Code'}
           </button>
         </div>
 
@@ -149,10 +115,7 @@ export default function Home() {
                 fill
                 className="border rounded object-contain"
                 unoptimized
-                onError={(e) => {
-                  console.error('Image failed to load:', e);
-                  setError('Failed to load QR code image');
-                }}
+                priority
               />
             </div>
             {qrData.deeplink && (
