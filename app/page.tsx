@@ -91,7 +91,7 @@ export default function Home() {
   return (
     <main className="min-h-screen p-8">
       <div className="max-w-md mx-auto space-y-8">
-        <h1 className="text-3xl font-bold text-center">NFC Scanner</h1>
+        <h1 className="text-3xl font-bold text-center">Verify Product</h1>
         
         <div className="flex justify-center">
           <button
