@@ -11,7 +11,7 @@ export default function SuccessPage() {
           {/* Product Image */}
           <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
             <Image
-              src="/api/placeholder/800/800"
+              src="/uni.png"
               alt="Exclusive Product"
               fill
               className="object-cover"
