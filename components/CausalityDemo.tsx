@@ -40,7 +40,7 @@ export function CausalityDemo() {
           const data = await response.json()
           if (data.status === 200 && data.message === 'true') {
             setStatus(`Success! NFC Tag: ${data.nfc_tag}`)
-            clearInterval(interval)
+            if (interval) clearInterval(interval)
           }
         } catch (error) {
           console.error('Error checking status:', error)
@@ -79,4 +79,3 @@ export function CausalityDemo() {
     </div>
   )
 }
-
