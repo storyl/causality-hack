@@ -1,11 +1,12 @@
-// app/page.tsx
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { QrCodeResponse, StatusCheckResponse } from './types';
 
 export default function Home() {
+  const router = useRouter();
   const [qrData, setQrData] = useState<QrCodeResponse | null>(null);
   const [scanStatus, setScanStatus] = useState<StatusCheckResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -68,7 +69,9 @@ export default function Home() {
         setScanStatus(data);
         
         if (data.status === 200) {
-          // Success - stop polling
+          // Success - redirect to success page
+          console.log('Successful scan, redirecting...');
+          router.push('/success'); // Replace '/success' with your desired route
           return;
         }
         
