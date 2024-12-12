@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { QrCodeResponse, StatusCheckResponse } from './types';
+import { LockOpenIcon } from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
@@ -90,16 +91,17 @@ export default function Home() {
 
   return (
     <main className="min-h-screen p-8">
-      <div className="max-w-md mx-auto space-y-8">
-        <h1 className="text-3xl font-bold text-center">Verify Product</h1>
+      <div className="max-w-md mx-auto h-[100svh] flex flex-col items-center justify-center space-y-8">
+        <span className='text-8xl'>🦄</span>
+        <h1 className="text-2xl font-bold text-center">✨Get Your✨<br/> Exlusive <span className='text-purple-500 italic'>Unicorn</span></h1>
         
         <div className="flex justify-center">
           <button
             onClick={requestNewQrCode}
             disabled={loading}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
+            className="px-4 py-2 bg-black text-white rounded hover:bg-black/80 disabled:bg-gray-400"
           >
-            {loading ? 'Generating...' : 'Generate QR Code'}
+            {loading ? 'Creating Key Link...' : <><span className='flex items-center'>Unlock <LockOpenIcon size={16} className='ml-1' /></span></>}
           </button>
         </div>
 
@@ -124,7 +126,7 @@ export default function Home() {
             {qrData.deeplink && (
               <a
                 href={qrData.deeplink}
-                className="text-blue-500 hover:underline"
+                className="text-purple-500 hover:underline"
               >
                 Open in App
               </a>
