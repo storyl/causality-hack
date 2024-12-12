@@ -90,7 +90,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen p-8">
+    <main className="min-h-[100svh] p-8">
       <div className="max-w-md mx-auto h-[100svh] flex flex-col items-center justify-center space-y-8">
         <span className='text-8xl'>🦄</span>
         <h1 className="text-2xl font-bold text-center">✨Get Your✨<br/> Exlusive <span className='text-purple-500 italic'>Unicorn</span></h1>
